@@ -29,30 +29,29 @@ public class UserMapperInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        //解析mapperXml配置文件
+        //1.解析mapperXml配置文件
         MapperBean mapperBean = XmlParseUtils.loadXml(path);
         if (!method.getDeclaringClass().getName().equals(mapperBean.getInterfaceName())) {
             return null;
         }
 
+        //2.查找要执行的方法
         List<InterfaceMethodInfo> interfaceMethodInfoList = mapperBean.getInterfaceMethodInfoList();
-
         InterfaceMethodInfo currentMethodInfo = getInterfaceMethodInfo(method, interfaceMethodInfoList);
+
 
         if (currentMethodInfo == null) {
             return null;
         }
 
-        //返回值对象
-        Object returnTypeObj = currentMethodInfo.getResultType();
-
-        //查询入参
+        //3.执行sql
         List<Object> paramsList = new ArrayList<>();
         paramsList.add(args[0]);
 
         ResultSet resultSet = JDBCUtils.query(currentMethodInfo.getSql(), paramsList);
 
-        // 结果集和对象映射
+        //4.结果赋值
+        Object returnTypeObj = currentMethodInfo.getResultType();
         setReturnTypeObj(returnTypeObj, resultSet);
 
         return returnTypeObj;
